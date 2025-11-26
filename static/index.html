@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR Review Agent - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 200px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-item {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .summary-item.critical {
+            background: #fee;
+            border: 2px solid #e74c3c;
+        }
+
+        .summary-item.high {
+            background: #ffedcc;
+            border: 2px solid #f39c12;
+        }
+
+        .summary-item.medium {
+            background: #fff4cc;
+            border: 2px solid #f1c40f;
+        }
+
+        .summary-item.low {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+
+        .summary-item .number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .summary-item .label {
+            font-size: 0.9em;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .review-item {
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .review-item.critical {
+            border-left-color: #e74c3c;
+            background: #fee;
+        }
+
+        .review-item.high {
+            border-left-color: #f39c12;
+            background: #ffedcc;
+        }
+
+        .review-item.medium {
+            border-left-color: #f1c40f;
+            background: #fff4cc;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .review-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge.critical {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .badge.high {
+            background: #f39c12;
+            color: white;
+        }
+
+        .badge.medium {
+            background: #f1c40f;
+            color: #333;
+        }
+
+        .badge.low {
+            background: #4caf50;
+            color: white;
+        }
+
+        .review-content h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .review-content p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .suggestion {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border-left: 3px solid #4caf50;
+        }
+
+        .error {
+            background: #fee;
+            color: #c0392b;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .agent-card {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .agent-card h3 {
+            margin-bottom: 10px;
+        }
+
+        .agent-card p {
+            opacity: 0.9;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .agent-card ul {
+            list-style: none;
+            font-size: 0.85em;
+        }
+
+        .agent-card li {
+            padding: 4px 0;
+            opacity: 0.8;
+        }
+
+        .agent-card li:before {
+            content: "✓ ";
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 PR Review Agent</h1>
+            <p>Multi-Agent AI Code Review System</p>
+        </div>
+
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('pr')">Review GitHub PR</button>
+                <button class="tab" onclick="switchTab('diff')">Review Diff</button>
+                <button class="tab" onclick="switchTab('agents')">View Agents</button>
+            </div>
+
+            <!-- PR Review Tab -->
+            <div id="pr-tab" class="tab-content active">
+                <form id="pr-form">
+                    <div class="form-group">
+                        <label for="repo-owner">Repository Owner</label>
+                        <input type="text" id="repo-owner" placeholder="e.g., facebook" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="repo-name">Repository Name</label>
+                        <input type="text" id="repo-name" placeholder="e.g., react" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pr-number">Pull Request Number</label>
+                        <input type="number" id="pr-number" placeholder="e.g., 123" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="github-token">GitHub Token (Optional)</label>
+                        <input type="password" id="github-token" placeholder="ghp_xxxxx">
+                        <small style="color: #666; font-size: 0.85em;">Required for private repos or higher rate limits</small>
+                    </div>
+                    <button type="submit" class="btn">Analyze Pull Request</button>
+                </form>
+            </div>
+
+            <!-- Diff Review Tab -->
+            <div id="diff-tab" class="tab-content">
+                <form id="diff-form">
+                    <div class="form-group">
+                        <label for="diff-content">Git Diff Content</label>
+                        <textarea id="diff-content" placeholder="Paste your git diff here..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="language">Programming Language</label>
+                        <input type="text" id="language" value="python" placeholder="e.g., python, javascript">
+                    </div>
+                    <button type="submit" class="btn">Analyze Diff</button>
+                </form>
+            </div>
+
+            <!-- Agents Tab -->
+            <div id="agents-tab" class="tab-content">
+                <h2 style="margin-bottom: 20px;">AI Review Agents</h2>
+                <div class="agents-grid" id="agents-list">
+                    <!-- Agents will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Loader -->
+            <div id="loader" class="loader">
+                <div class="spinner"></div>
+                <p>Analyzing code with AI agents... This may take 15-30 seconds.</p>
+            </div>
+
+            <!-- Error -->
+            <div id="error" class="error"></div>
+
+            <!-- Results -->
+            <div id="results" class="results">
+                <h2>Review Results</h2>
+                <div id="summary" class="summary"></div>
+                <h3 style="margin: 20px 0;">Detailed Findings</h3>
+                <div id="reviews-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+            
+            if (tab === 'agents') {
+                loadAgents();
+            }
+        }
+
+        async function loadAgents() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/agents`);
+                const data = await response.json();
+                
+                const agentsHtml = data.agents.map(agent => `
+                    <div class="agent-card">
+                        <h3>${agent.name}</h3>
+                        <p>${agent.focus}</p>
+                        <ul>
+                            ${agent.categories.map(cat => `<li>${cat}</li>`).join('')}
+                        </ul>
+                    </div>
+                `).join('');
+                
+                document.getElementById('agents-list').innerHTML = agentsHtml;
+            } catch (error) {
+                console.error('Failed to load agents:', error);
+            }
+        }
+
+        document.getElementById('pr-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const repoOwner = document.getElementById('repo-owner').value;
+            const repoName = document.getElementById('repo-name').value;
+            const prNumber = document.getElementById('pr-number').value;
+            const githubToken = document.getElementById('github-token').value;
+            
+            await analyzePR(repoOwner, repoName, prNumber, githubToken);
+        });
+
+        document.getElementById('diff-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const diffContent = document.getElementById('diff-content').value;
+            const language = document.getElementById('language').value;
+            
+            await analyzeDiff(diffContent, language);
+        });
+
+        async function analyzePR(repoOwner, repoName, prNumber, githubToken) {
+            showLoader();
+            hideError();
+            hideResults();
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/review/pr`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        repo_owner: repoOwner,
+                        repo_name: repoName,
+                        pr_number: parseInt(prNumber),
+                        github_token: githubToken || null
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to analyze PR');
+                }
+                
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        async function analyzeDiff(diffContent, language) {
+            showLoader();
+            hideError();
+            hideResults();
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/review/diff`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        diff_content: diffContent,
+                        language: language
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to analyze diff');
+                }
+                
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function displayResults(data) {
+            const summary = data.review_summary;
+            const reviews = data.reviews;
+            
+            // Display summary
+            const summaryHtml = `
+                <div class="summary-item critical">
+                    <div class="number">${summary.critical}</div>
+                    <div class="label">Critical</div>
+                </div>
+                <div class="summary-item high">
+                    <div class="number">${summary.high}</div>
+                    <div class="label">High</div>
+                </div>
+                <div class="summary-item medium">
+                    <div class="number">${summary.medium}</div>
+                    <div class="label">Medium</div>
+                </div>
+                <div class="summary-item low">
+                    <div class="number">${summary.low}</div>
+                    <div class="label">Low</div>
+                </div>
+            `;
+            document.getElementById('summary').innerHTML = summaryHtml;
+            
+            // Display reviews
+            const reviewsHtml = reviews.map(review => `
+                <div class="review-item ${review.severity}">
+                    <div class="review-header">
+                        <div class="review-meta">
+                            <span><strong>${review.agent}</strong></span>
+                            <span>📄 ${review.file}</span>
+                            ${review.line ? `<span>📍 Line ${review.line}</span>` : ''}
+                        </div>
+                        <span class="badge ${review.severity}">${review.severity.toUpperCase()}</span>
+                    </div>
+                    <div class="review-content">
+                        <h4>⚠️ ${review.issue}</h4>
+                        <p><strong>Category:</strong> ${review.category}</p>
+                        <div class="suggestion">
+                            <strong>💡 Suggestion:</strong>
+                            <p>${review.suggestion}</p>
+                        </div>
+                        <p style="font-size: 0.85em; color: #666; margin-top: 10px;">
+                            Confidence: ${(review.confidence * 100).toFixed(0)}%
+                        </p>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('reviews-list').innerHTML = reviewsHtml || '<p>No issues found! 🎉</p>';
+            
+            showResults();
+        }
+
+        function showLoader() {
+            document.getElementById('loader').classList.add('active');
+        }
+
+        function hideLoader() {
+            document.getElementById('loader').classList.remove('active');
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = `❌ Error: ${message}`;
+            errorEl.classList.add('active');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.remove('active');
+        }
+
+        function showResults() {
+            document.getElementById('results').classList.add('active');
+        }
+
+        function hideResults() {
+            document.getElementById('results').classList.remove('active');
+        }
+
+        // Load agents on page load
+        window.addEventListener('load', () => {
+            loadAgents();
+        });
+    </script>
+</body>
+</html>

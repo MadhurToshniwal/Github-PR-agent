@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=production
+      - REDIS_URL=redis://redis:6379/0
+      - REDIS_ENABLED=true
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - pr-review-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - pr-review-network
+
+volumes:
+  redis-data:
+
+networks:
+  pr-review-network:
+    driver: bridge
