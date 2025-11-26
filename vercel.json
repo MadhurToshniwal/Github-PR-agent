@@ -2,20 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "app/main.py",
+      "src": "api/index.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "app/main.py"
+      "dest": "api/index.py"
     }
-  ],
-  "env": {
-    "LLM_PROVIDER": "groq",
-    "DEFAULT_LLM_MODEL": "llama-3.3-70b-versatile",
-    "ENVIRONMENT": "production",
-    "LOG_LEVEL": "INFO"
-  }
+  ]
 }

@@ -1,0 +1,29 @@
+# fly.toml app configuration file
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+
+app = "pr-review-agent"
+primary_region = "iad"
+
+[build]
+  [build.args]
+    PYTHON_VERSION = "3.10"
+
+[env]
+  PORT = "8000"
+  LLM_PROVIDER = "groq"
+  DEFAULT_LLM_MODEL = "llama-3.3-70b-versatile"
+  ENVIRONMENT = "production"
+  LOG_LEVEL = "INFO"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
